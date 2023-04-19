@@ -6,13 +6,15 @@ spark = SparkSession.builder.appName("Simple Spark app").master("local[2]").getO
 
 df = spark.read.option('header', True).option('inferSchema', True).csv("/home/oxana/Documents/Spark/сoviddata.csv")
 
-data = df.select('location', col('new_cases').alias('new_cases_today'), 'date').where((col('date').between('2021-03-24', '2021-03-31'))&(col('location') == 'Russia'))
+data = df.select('location', col('new_cases').alias('new_cases_today'), 'date').\
+    where((col('date').between('2021-03-23', '2021-03-31'))&(col('location') == 'Russia'))
 
 w = Window().partitionBy('location').orderBy('date')
 
 win_today = data.withColumn('new_cases_yesterday',(lag('new_cases_today').over(w)))
 
-result = win_today.select('date', 'new_cases_today', 'new_cases_yesterday', (col('new_cases_today') - col('new_cases_yesterday')).alias('delta')).na.fill(value=0)
+result = win_today.select('date', 'new_cases_today', 'new_cases_yesterday', (col('new_cases_today') - col('new_cases_yesterday')).alias('delta')).\
+    na.fill(value=0).where(col('date').between('2021-03-23', '2021-03-31'))
 
 result.show()
 
